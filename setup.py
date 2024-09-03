@@ -19,7 +19,6 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Framework :: AsyncIO",
-        "Framework :: Quart",
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Internet :: WWW/HTTP :: Session",
@@ -27,7 +26,6 @@ setup(
     ],
     python_requires='>=3.8',
     install_requires=[
-        "quart>=0.15",  # Ensure compatibility with Quart 0.15 and above
         "asyncpg>=0.21",  # Ensure compatibility with asyncpg 0.21 and above
         "passlib>=1.7.4",  # Ensure compatibility with passlib 1.7.4 and above
         "PyJWT>=2.1.0",  # Ensure compatibility with PyJWT 2.1.0 and above
