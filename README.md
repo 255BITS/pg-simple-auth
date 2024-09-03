@@ -2,8 +2,6 @@
 
 A lightweight and easy-to-integrate authentication module for asynchronous Python applications using PostgreSQL and Quart. `pg_simple_auth` offers essential user authentication features such as signup, login, email verification, and password management, all built on secure and modern standards.
 
----
-
 ## Features
 
 - **Asynchronous Design:** Fully asynchronous using `asyncio` and `asyncpg` to ensure non-blocking I/O operations.
@@ -13,17 +11,14 @@ A lightweight and easy-to-integrate authentication module for asynchronous Pytho
 - **Built-in Email Verification:** Provides token-based email verification out of the box to ensure user identity.
 
 pg_simple_auth lets you choose your framework, email sender, and app server while staying simple and easy to understand.
----
 
 ## Installation
 
 Install the necessary dependencies via pip:
 
----
+```sh
 pip install pg_simple_auth
----
-
----
+```
 
 ## Usage
 
@@ -31,7 +26,7 @@ pip install pg_simple_auth
 
 In your Quart application, initialize the `pg_simple_auth` module with the database configuration and secret key:
 
----
+```python
 from quart import Quart
 import asyncpg
 import pg_simple_auth as auth
@@ -52,13 +47,13 @@ async def setup_db():
 if __name__ == '__main__':
     app.secret_key = SECRET_KEY
     app.run()
----
+```
 
 ### Implementing Authentication Routes
 
 The module provides easy-to-use methods for signup, login, and user session management:
 
----
+```python
 @app.route('/signup', methods=['POST'])
 async def signup():
     user = ...
@@ -94,13 +89,11 @@ async def change_password(token):
 async def signout():
     session.pop('token', None)
     return redirect(url_for('login'))
----
+```
 
 ### Example
 
 Check the `examples/1-quart.py` file in this repository for a full example of how to set up and use `pg_simple_auth` in a Quart application.
-
----
 
 ## Requirements
 
@@ -109,25 +102,17 @@ Check the `examples/1-quart.py` file in this repository for a full example of ho
 - `asyncpg` library
 - `Quart` ASGI framework
 
----
-
 ## Author
 
 Developed by [255labs.xyz](https://255labs.xyz), an AI product and consulting startup committed to helping people navigate the AI era through innovative products and open-source contributions.
-
----
 
 ## Contributing
 
 Contributions are highly encouraged! Please open an issue to discuss potential changes or submit a pull request.
 
----
-
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
-
----
 
 ## Acknowledgements
 
