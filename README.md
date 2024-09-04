@@ -106,6 +106,10 @@ Check the `examples/1-quart.py` file in this repository for a full example of ho
 
 Developed by [255labs.xyz](https://255labs.xyz), an AI product and consulting startup committed to helping people navigate the AI era through innovative products and open-source contributions.
 
+## Changelog
+
+* 09/03/24 - 0.1.2, add oauth support, `login_oauth(provider, oauth_id)` and `signup_oauth(provider, oauth_id, **insert_args)`
+
 ## Contributing
 
 Contributions are highly encouraged! Please open an issue to discuss potential changes or submit a pull request.
