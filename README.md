@@ -108,7 +108,7 @@ Developed by [255labs.xyz](https://255labs.xyz), an AI product and consulting st
 
 ## Changelog
 
-* 09/03/24 - 0.1.2, add oauth support, `login_oauth(provider, oauth_id)` and `signup_oauth(provider, oauth_id, **insert_args)`
+* 09/03/24 - 0.1.1, add oauth support, `login_oauth(provider, oauth_id)` and `signup_oauth(provider, oauth_id, **insert_args)`
 
 ## Contributing
 
