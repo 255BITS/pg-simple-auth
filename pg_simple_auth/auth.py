@@ -7,6 +7,9 @@ from passlib.hash import argon2
 import re
 from dataclasses import dataclass
 
+class UserExistsError(ValueError):
+    pass
+
 @dataclass
 class AuthConfig:
     jwt_expiration: int = 3600  # 1 hour
@@ -51,15 +54,18 @@ async def _lazy_migration():
             'verified': 'BOOLEAN DEFAULT FALSE',
             'failed_login_attempts': 'INT DEFAULT 0',
             'last_failed_login': 'TIMESTAMP WITH TIME ZONE',
-            'email': 'VARCHAR(255) UNIQUE NOT NULL',
-            'password_hash': 'VARCHAR(255) NOT NULL',
-            'created_at': 'TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP'
+            'email': 'VARCHAR(255)',
+            'password_hash': 'VARCHAR(255)',
+            'created_at': 'TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP',
+            'oauth_provider': 'VARCHAR(50)',
+            'oauth_id': 'VARCHAR(255)',
+            'id': 'SERIAL'
         }
 
         existing_columns = await conn.fetch(f"""
             SELECT column_name 
             FROM information_schema.columns 
-            WHERE table_name = '{table_name}'
+            WHERE table_name = '{table_name.replace('public.', '')}'
         """)
         existing_columns = [col['column_name'] for col in existing_columns]
 
@@ -80,25 +86,47 @@ def check_password_strength(password: str) -> bool:
         return False
     return True
 
-async def signup(email: str, password: str) -> Dict[str, Any]:
-    if not check_password_strength(password):
-        raise ValueError("Password does not meet strength requirements")
-    
-    hashed_password = argon2.hash(password)
+async def signup(email: str, password: str, **insert_args) -> Dict[str, Any]:
     async with db_pool.acquire() as conn:
-        user_id = await conn.fetchval(
-            f"INSERT INTO {table_name} (email, password_hash) VALUES ($1, $2) RETURNING id",
-            email, hashed_password
+        # Check if the email already exists
+        existing_user = await conn.fetchrow(
+            f"SELECT id FROM {table_name} WHERE email = $1 AND oauth_id IS NULL",
+            email
         )
+        
+        if existing_user:
+            raise UserExistsError(f"User already exists")
+        
+        if not check_password_strength(password):
+            raise ValueError("Password does not meet strength requirements")
+        
+        hashed_password = argon2.hash(password)
+        
+        # Prepare the dynamic parts of the query
+        additional_columns = ", ".join(insert_args.keys())
+        additional_values = ", ".join([f"${i + 3}" for i in range(len(insert_args))])
+        query_values = [email, hashed_password] + list(insert_args.values())
+        
+        # Build the full query
+        query = f"""
+            INSERT INTO {table_name} (email, password_hash{', ' if additional_columns else ''}{additional_columns})
+            VALUES ($1, $2{', ' if additional_values else ''}{additional_values})
+            RETURNING id
+        """
+        
+        # Insert the new user
+        user_id = await conn.fetchval(query, *query_values)
+    
     verification_token = await generate_verification_token(user_id)
     return {"id": user_id, "email": email, "verification_token": verification_token}
 
 async def login(email: str, password: str) -> Optional[Dict[str, Any]]:
     async with db_pool.acquire() as conn:
-        user = await conn.fetchrow(
-            f"SELECT id, email, password_hash, verified, failed_login_attempts, last_failed_login FROM {table_name} WHERE email = $1",
+        sql =             f"SELECT id, email, password_hash, verified, failed_login_attempts, last_failed_login FROM {table_name} WHERE email = $1 AND oauth_id is null"
+        user = await conn.fetchrow(sql,
             email
         )
+        print('!!', sql, email)
         
         if user:
             if user['failed_login_attempts'] >= config.max_login_attempts:
@@ -121,6 +149,50 @@ async def login(email: str, password: str) -> Optional[Dict[str, Any]]:
                     f"UPDATE {table_name} SET failed_login_attempts = failed_login_attempts + 1, last_failed_login = $1 WHERE id = $2",
                     datetime.utcnow(), user['id']
                 )
+    
+    return None
+
+async def signup_oauth(provider: str, oauth_id: str, **insert_args) -> Dict[str, Any]:
+    async with db_pool.acquire() as conn:
+        # Check if the user already exists with the same oauth_id and provider
+        existing_user = await conn.fetchrow(
+            f"SELECT id FROM {table_name} WHERE oauth_provider = $1 AND oauth_id = $2",
+            provider, oauth_id
+        )
+        
+        if existing_user:
+            raise UserExistsError(f"User already exists")
+        
+        # Prepare the dynamic parts of the query
+        additional_columns = ", ".join(insert_args.keys())
+        additional_values = ", ".join([f"${i + 3}" for i in range(len(insert_args))])
+        query_values = [provider, oauth_id] + list(insert_args.values())
+        
+        # Build the full query
+        query = f"""
+            INSERT INTO {table_name} (oauth_provider, oauth_id{', ' if additional_columns else ''}{additional_columns})
+            VALUES ($1, $2{', ' if additional_values else ''}{additional_values})
+            RETURNING id
+        """
+        
+        # Insert the new user
+        user_id = await conn.fetchval(query, *query_values)
+    
+    return {"id": user_id, "email": email, "provider": provider, "oauth_id": oauth_id}
+
+async def login_oauth(provider: str, oauth_id: str) -> Optional[Dict[str, Any]]:
+    async with db_pool.acquire() as conn:
+        user = await conn.fetchrow(
+            f"SELECT id, email, verified FROM {table_name} WHERE oauth_provider = $1 AND oauth_id = $2",
+            provider, oauth_id
+        )
+        
+        if user:
+            #if not user['verified']:
+            #    return {"error": "Account not verified"}
+
+            token = _generate_jwt(user['id'], user['email'])
+            return {"user": {"id": user['id'], "email": user['email'], "provider": provider, "oauth_id": oauth_id}, "token": token}
     
     return None
 
@@ -210,7 +282,7 @@ async def get_user_by_id(user_id: int) -> Optional[Dict[str, Any]]:
         )
     return dict(row) if row else None
 
-def _generate_jwt(user_id: int, email: str) -> str:
+def _generate_jwt(user_id: int, email: Optional[str] = None) -> str:
     payload = {
         'user_id': user_id,
         'email': email,
