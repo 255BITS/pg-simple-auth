@@ -6,7 +6,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="pg_simple_auth",  # The name of your package
-    version="0.1.1",  # The initial release version
+    version="0.1.2",  # The initial release version
     author='Martyn Garcia',
     author_email='martyn@255bits.com',
     description="A simple asynchronous authentication module for PostgreSQL",
