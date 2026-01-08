@@ -178,7 +178,7 @@ async def signup_oauth(provider: str, oauth_id: str, **insert_args) -> Dict[str,
         # Insert the new user
         user_id = await conn.fetchval(query, *query_values)
     
-    return {"id": user_id, "email": email, "provider": provider, "oauth_id": oauth_id}
+    return {"id": user_id, "email": insert_args.get("email"), "provider": provider, "oauth_id": oauth_id}
 
 async def login_oauth(provider: str, oauth_id: str) -> Optional[Dict[str, Any]]:
     async with db_pool.acquire() as conn:
