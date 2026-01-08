@@ -6,7 +6,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="pg_simple_auth",  # The name of your package
-    version="0.1.3",  # Fix: NameError in signup_oauth - email not defined
+    version="0.1.4",  # Fix: NameError in signup_oauth - email not defined
     author='Martyn Garcia',
     author_email='martyn@255bits.com',
     description="A simple asynchronous authentication module for PostgreSQL",
