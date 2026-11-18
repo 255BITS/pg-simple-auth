@@ -27,7 +27,7 @@ setup(
     python_requires='>=3.8',
     install_requires=[
         "asyncpg>=0.21",  # Ensure compatibility with asyncpg 0.21 and above
-        "passlib>=1.7.4",  # Ensure compatibility with passlib 1.7.4 and above
+        "passlib[argon2]>=1.7.4",
         "PyJWT>=2.1.0",  # Ensure compatibility with PyJWT 2.1.0 and above
     ],
     include_package_data=True,  # Include other files specified in MANIFEST.in
