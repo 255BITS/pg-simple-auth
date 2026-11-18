@@ -123,3 +123,10 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 - `asyncpg` for providing a robust asynchronous PostgreSQL driver.
 - The developers of `Quart` for creating an excellent ASGI framework for Python.
 - The PostgreSQL community for their powerful and reliable database system.
+
+## GitHub source releases
+
+Update the package version in `setup.py` in the release PR. When the version
+change reaches `main`, the distribution build and tests qualify the exact
+commit for a GitHub release tagged `v<version>`. PyPI publishing runs as a
+separate job.
